@@ -1,0 +1,24 @@
+public class ConsistentHashDriver {
+    public static void main(String[] args) throws Exception {
+        ConsistentHashingLoadBalancer lb = new ConsistentHashingLoadBalancer(100); // 100 virtual nodes per server
+
+        lb.addServer("ServerA");
+        lb.addServer("ServerB");
+        lb.addServer("ServerC");
+
+        lb.printRing();
+
+        String[] keys = {"apple", "banana", "carrot", "dog", "elephant"};
+
+        for (String key : keys) {
+            System.out.printf("Key '%s' => %s\n", key, lb.getServer(key));
+        }
+
+        System.out.println("\n--- Removing ServerB ---\n");
+        lb.removeServer("ServerB");
+
+        for (String key : keys) {
+            System.out.printf("Key '%s' => %s\n", key, lb.getServer(key));
+        }
+    }
+}
