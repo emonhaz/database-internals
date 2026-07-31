@@ -1,41 +1,43 @@
-public class ConnectionPoolTest {
+import java.util.concurrent.TimeUnit;
 
-    public static void main(String[] args) throws InterruptedException {
-        ConnectionPool pool = new ConnectionPool(2); // max 2 connections
+/** Manual smoke checks for acquire / release / timeout. Prefer ConnectionPoolUnitTest. */
+public final class ConnectionPoolTest {
+    private ConnectionPoolTest() {
+    }
 
-        Connection c1 = pool.acquire();
-        System.out.println("Acquired c1: " + c1.getId());
+    public static void main(String[] args) throws Exception {
+        try (ConnectionPool pool = new ConnectionPool(2)) {
+            Connection c1 = pool.acquire();
+            Connection c2 = pool.acquire();
+            System.out.println("Acquired c1=" + c1.getId() + " c2=" + c2.getId());
+            System.out.println("Available (expect 0): " + pool.availableConnections());
 
-        Connection c2 = pool.acquire();
-        System.out.println("Acquired c2: " + c2.getId());
+            pool.release(c1);
+            System.out.println("Available after release (expect 1): " + pool.availableConnections());
 
-        System.out.println("Available connections (should be 0): " + pool.availableConnections());
+            Connection c3 = pool.acquire();
+            System.out.println("Acquired c3=" + c3.getId());
 
-        pool.release(c1);
-        System.out.println("Released c1");
-
-        System.out.println("Available connections (should be 1): " + pool.availableConnections());
-
-        Connection c3 = pool.acquire();
-        System.out.println("Acquired c3: " + c3.getId());
-
-        // Optional: try acquiring with timeout
-        Thread t = new Thread(() -> {
-            try {
-                System.out.println("Trying to acquire with timeout...");
-                Connection c4 = pool.acquire(1, TimeUnit.SECONDS);
-                if (c4 == null) {
-                    System.out.println("Timed out waiting for connection");
-                } else {
-                    System.out.println("Acquired c4: " + c4.getId());
-                    pool.release(c4);
+            Thread t = new Thread(() -> {
+                try {
+                    Connection timed = pool.acquire(500, TimeUnit.MILLISECONDS);
+                    if (timed == null) {
+                        System.out.println("Timed out waiting for connection (expected)");
+                    } else {
+                        System.out.println("Unexpected acquire: " + timed.getId());
+                        pool.release(timed);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
+            });
+            t.start();
+            t.join();
 
-        t.start();
-        Thread.sleep(1500); // Wait for timeout test to complete
+            pool.release(c2);
+            pool.release(c3);
+            System.out.println("Final available=" + pool.availableConnections()
+                    + " timeouts=" + pool.timeoutCount());
+        }
     }
 }

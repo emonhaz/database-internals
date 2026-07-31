@@ -1,24 +1,39 @@
-public class ConcurrencyTest {
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-    public static void main(String[] args) {
-        ConnectionPool pool = new ConnectionPool(2);
+/** Manual concurrency smoke test: 4 workers, pool size 2. */
+public final class ConcurrencyTest {
+    private ConcurrencyTest() {
+    }
 
-        Runnable task = () -> {
-            try {
-                Connection conn = pool.acquire();
-                System.out.println(Thread.currentThread().getName() + " acquired connection " + conn.getId());
-                Thread.sleep(2000); // simulate work
-                pool.release(conn);
-                System.out.println(Thread.currentThread().getName() + " released connection " + conn.getId());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+    public static void main(String[] args) throws Exception {
+        try (ConnectionPool pool = new ConnectionPool(2)) {
+            int workers = 4;
+            ExecutorService executor = Executors.newFixedThreadPool(workers);
+            CountDownLatch done = new CountDownLatch(workers);
+
+            for (int i = 1; i <= workers; i++) {
+                executor.submit(() -> {
+                    try (ConnectionPool.Lease lease = pool.acquireLease()) {
+                        Connection conn = lease.get();
+                        System.out.println(Thread.currentThread().getName()
+                                + " acquired connection " + conn.getId()
+                                + " (active=" + pool.activeConnections() + ")");
+                        Thread.sleep(500);
+                    } catch (Exception e) {
+                        System.err.println(Thread.currentThread().getName() + ": " + e.getMessage());
+                    } finally {
+                        done.countDown();
+                    }
+                });
             }
-        };
 
-        // Run 4 threads → only 2 should be able to acquire at a time
-        for (int i = 1; i <= 4; i++) {
-            Thread t = new Thread(task, "Worker-" + i);
-            t.start();
+            done.await();
+            executor.shutdown();
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+            System.out.println("Available after drain: " + pool.availableConnections());
         }
     }
 }
