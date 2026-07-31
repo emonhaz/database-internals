@@ -6,7 +6,7 @@ Contains prototypes for below:
 2b. Consistent Hashing — [`ConsistentHashing`](demo/src/main/java/com/example/database/internals/ConsistentHashing/) (`ConsistentHashingDemo`, unit tests)
 3. Pessimistic Locking — [`AirlineCheckin`](demo/src/main/java/com/example/database/internals/PessimisticLocking/) (`schema.sql`, then run with optional `--blocking`)
 4. Reatime chat with socket.io
-5. LSM trees
+5. LSM trees — [`LSM`](demo/src/main/java/com/example/database/internals/LSM/) (`LSMCreator` demo, unit tests)
 6. Bloom Filters — see [`demo/src/main/java/com/example/database/internals/BloomFilter/README.md`](demo/src/main/java/com/example/database/internals/BloomFilter/README.md) for interview talking points.
    Measure:
     a) False Positive Rate vs Size of the Filter
