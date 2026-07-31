@@ -2,7 +2,7 @@
 
 Contains prototypes for below:
 1. ConnectionPool — [`ConnectionPool`](demo/src/main/java/com/example/database/internals/ConnectionPool/) (`ConnectionPoolDemo`, unit tests)
-2. Sharding
+2. Sharding — [`Sharding`](demo/src/main/java/com/example/database/internals/Sharding/) (`ShardingDemo`, unit tests)
 2b. Consistent Hashing — [`ConsistentHashing`](demo/src/main/java/com/example/database/internals/ConsistentHashing/) (`ConsistentHashingDemo`, unit tests)
 3. Pessimistic Locking — [`AirlineCheckin`](demo/src/main/java/com/example/database/internals/PessimisticLocking/) (`schema.sql`, then run with optional `--blocking`)
 4. Reatime chat with socket.io

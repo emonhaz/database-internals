@@ -1,34 +1,36 @@
-public class HeartbeatService {
-    public static void updateHeartbeat(String userId) {
-        try {
-            Connection conn = ShardManager.getShardConnection(userId);
-            String query = "REPLACE INTO oo_heartbeats (user_id, last_hb) VALUES (?, ?)";
-            try (var stmt = conn.prepareStatement(query)) {
-                stmt.setString(1, userId);
-                stmt.setLong(2, System.currentTimeMillis() / 1000);
-                stmt.executeUpdate();
-                System.out.println("Heartbeat updated for user: " + userId);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+import java.util.Objects;
+
+/**
+ * Per-user presence heartbeats stored on the same shard as the user
+ * (so presence scales with the user partition).
+ */
+public final class HeartbeatService {
+    private final ShardRouter router;
+    private final long onlineWindowSeconds;
+
+    public HeartbeatService(ShardRouter router) {
+        this(router, 30);
     }
 
-    public static boolean isOnline(String userId) {
-        try {
-            Connection conn = ShardManager.getShardConnection(userId);
-            String query = "SELECT last_hb FROM oo_heartbeats WHERE user_id = ?";
-            try (var stmt = conn.prepareStatement(query)) {
-                stmt.setString(1, userId);
-                var rs = stmt.executeQuery();
-                if (rs.next()) {
-                    int lastHb = rs.getInt("last_hb");
-                    return lastHb > (System.currentTimeMillis() / 1000) - 30;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public HeartbeatService(ShardRouter router, long onlineWindowSeconds) {
+        this.router = Objects.requireNonNull(router, "router");
+        if (onlineWindowSeconds <= 0) {
+            throw new IllegalArgumentException("onlineWindowSeconds must be > 0");
         }
-        return false;
+        this.onlineWindowSeconds = onlineWindowSeconds;
+    }
+
+    public void updateHeartbeat(String userId) {
+        long now = System.currentTimeMillis() / 1000L;
+        router.storeFor(userId).upsertHeartbeat(userId, now);
+    }
+
+    public boolean isOnline(String userId) {
+        Long last = router.storeFor(userId).getHeartbeat(userId);
+        if (last == null) {
+            return false;
+        }
+        long now = System.currentTimeMillis() / 1000L;
+        return last > now - onlineWindowSeconds;
     }
 }
