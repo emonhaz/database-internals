@@ -3,7 +3,7 @@
 Contains prototypes for below:
 1. ConnectionPool
 2. Sharding
-3. Pessimistic Locking
+3. Pessimistic Locking — [`AirlineCheckin`](demo/src/main/java/com/example/database/internals/PessimisticLocking/) (`schema.sql`, then run with optional `--blocking`)
 4. Reatime chat with socket.io
 5. LSM trees
 6. Bloom Filters — see [`demo/src/main/java/com/example/database/internals/BloomFilter/README.md`](demo/src/main/java/com/example/database/internals/BloomFilter/README.md) for interview talking points.
