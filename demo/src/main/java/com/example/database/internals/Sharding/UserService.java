@@ -1,21 +1,30 @@
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.util.Objects;
 
-public class UserService {
-    private final ShardManager shardManager;
+/** Thin service over {@link UserRepository} (keeps API / repo separation). */
+public final class UserService {
+    private final UserRepository repository;
+    private final ShardRouter router;
 
-    public UserService(ShardManager shardManager) {
-        this.shardManager = shardManager;
+    public UserService(ShardManager manager) {
+        Objects.requireNonNull(manager, "manager");
+        this.repository = new UserRepository(manager);
+        this.router = manager.router();
     }
 
-    public void createUser(int userId, String name) throws SQLException {
-        Connection conn = shardManager.getConnectionForUser(userId);
+    public UserService(UserRepository repository, ShardRouter router) {
+        this.repository = Objects.requireNonNull(repository, "repository");
+        this.router = Objects.requireNonNull(router, "router");
+    }
 
-        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO users (id, name) VALUES (?, ?)")) {
-            stmt.setInt(1, userId);
-            stmt.setString(2, name);
-            stmt.executeUpdate();
-        }
+    public void createUser(String userId, String name) {
+        repository.createUser(userId, name);
+    }
+
+    public String getUser(String userId) {
+        return repository.getUser(userId);
+    }
+
+    public int shardFor(String userId) {
+        return router.shardIndexFor(userId);
     }
 }

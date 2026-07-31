@@ -1,30 +1,22 @@
-public class UserRepository {
-    private final ShardManager shardManager;
+import java.util.Objects;
 
-    public UserRepository(ShardManager shardManager) {
-        this.shardManager = shardManager;
+/** Persistence API routed through {@link ShardRouter}. */
+public final class UserRepository {
+    private final ShardRouter router;
+
+    public UserRepository(ShardRouter router) {
+        this.router = Objects.requireNonNull(router, "router");
     }
 
-    public void createUser(String userId, String name) throws SQLException {
-        DataSource ds = shardManager.getDataSource(userId);
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement("INSERT INTO users (id, name) VALUES (?, ?)")) {
-            ps.setString(1, userId);
-            ps.setString(2, name);
-            ps.executeUpdate();
-        }
+    public UserRepository(ShardManager manager) {
+        this(Objects.requireNonNull(manager, "manager").router());
     }
 
-    public String getUser(String userId) throws SQLException {
-        DataSource ds = shardManager.getDataSource(userId);
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT name FROM users WHERE id = ?")) {
-            ps.setString(1, userId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getString("name");
-            }
-            return null;
-        }
+    public void createUser(String userId, String name) {
+        router.storeFor(userId).upsertUser(userId, name);
+    }
+
+    public String getUser(String userId) {
+        return router.storeFor(userId).getUser(userId);
     }
 }
