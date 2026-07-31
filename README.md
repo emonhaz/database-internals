@@ -3,6 +3,7 @@
 Contains prototypes for below:
 1. ConnectionPool
 2. Sharding
+2b. Consistent Hashing — [`ConsistentHashing`](demo/src/main/java/com/example/database/internals/ConsistentHashing/) (`ConsistentHashingDemo`, unit tests)
 3. Pessimistic Locking — [`AirlineCheckin`](demo/src/main/java/com/example/database/internals/PessimisticLocking/) (`schema.sql`, then run with optional `--blocking`)
 4. Reatime chat with socket.io
 5. LSM trees
