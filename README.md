@@ -13,7 +13,7 @@ Contains prototypes for below:
     b) False Positive Rate vs Number of Hash Functions
     c) Optimal sizing from expected insertions `n` and target FPP `p`
    Run: `cd demo && mvn test -Dtest=BloomFilterUnitTest`
-7. Google File System
+7. Google File System — [`GFS`](demo/src/main/java/com/example/database/internals/GFS/) (`GFSRunner`, unit tests)
 
 To run the real-time chat run the below commands
 1. npm init -y
